@@ -20,6 +20,7 @@
 #include <Vc/Vc>
 #if defined(VC_IMPL_SSE) || defined(VC_IMPL_AVX)
 #include <common/macros.h>
+#include <common/svml.h>
 
 namespace Vc
 {
@@ -73,6 +74,229 @@ namespace
             + x;
     }
 } // anonymous namespace
+
+#if defined(USE_INTEL_SVML)
+#if defined(VC_IMPL_SSE)
+// sin
+template<> template<> float_v Trigonometric<VC_IMPL>::sin(const float_v &_x){
+    float_v tmp;
+    tmp.data() = __svml_sinf4(_x.data());
+    return tmp;
+}
+
+template<> template<> sfloat_v Trigonometric<VC_IMPL>::sin(const sfloat_v &_x){
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_sinf4(_x.data()[0]);
+    tmp.data()[1] = __svml_sinf4(_x.data()[1]);
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::sin(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_sin2(_x.data());
+    return tmp;
+}
+
+// cos
+template<> template<> float_v Trigonometric<VC_IMPL>::cos(const float_v &_x){
+    float_v tmp;
+    tmp.data() = __svml_cosf4(_x.data());
+    return tmp;
+}
+
+template<> template<> sfloat_v Trigonometric<VC_IMPL>::cos(const sfloat_v &_x){
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_cosf4(_x.data()[0]);
+    tmp.data()[1] = __svml_cosf4(_x.data()[1]);
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::cos(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_cos2(_x.data());
+    return tmp;
+}
+
+// sincos
+template<> template<> void Trigonometric<VC_IMPL>::sincos(const float_v &_x, float_v *_sin, float_v *_cos) {
+    _sin->data() = __svml_sincosf4(_x.data());
+#if defined(__unix__) || defined(__GNUC__)
+     __asm__ __volatile__ ( "movaps %%xmm1, %0":"=m"(_cos->data()));
+#else // Windows
+    _asm vmovapd _cos->data(), ymm1;
+#endif
+}
+
+template<> template<> void Trigonometric<VC_IMPL>::sincos(const sfloat_v &_x, sfloat_v *_sin, sfloat_v *_cos) {
+    _sin->data()[0] = __svml_sincosf4(_x.data()[0]);
+#if defined(__unix__) || defined(__GNUC__)
+     __asm__ __volatile__ ( "movaps %%xmm1, %0":"=m"(_cos->data()[0]));
+#else // Windows
+    _asm vmovapd _cos->data()[0], ymm1;
+#endif
+
+    _sin->data()[1] = __svml_sincosf4(_x.data()[1]);
+#if defined(__unix__) || defined(__GNUC__)
+     __asm__ __volatile__ ( "movaps %%xmm1, %0":"=m"(_cos->data()[1]));
+#else // Windows
+    _asm vmovapd _cos->data()[1], ymm1;
+#endif
+}
+
+template<> template<> void Trigonometric<VC_IMPL>::sincos(const double_v &_x, double_v *_sin, double_v *_cos) {
+  _sin->data() = __svml_sincos2(_x.data());
+#if defined(__unix__) || defined(__GNUC__)
+     __asm__ __volatile__ ( "movaps %%xmm1, %0":"=m"(_cos->data()));
+#else // Windows
+    _asm vmovapd _cos->data(), ymm1;
+#endif
+}
+
+// asin
+template<> template<> float_v Trigonometric<VC_IMPL>::asin(const float_v &_x){
+    float_v tmp;
+    tmp.data() = __svml_asinf4(_x.data());
+    return tmp;
+}
+
+template<> template<> sfloat_v Trigonometric<VC_IMPL>::asin(const sfloat_v &_x){
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_asinf4(_x.data()[0]);
+    tmp.data()[1] = __svml_asinf4(_x.data()[1]);
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::asin(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_asin2(_x.data());
+    return tmp;
+}
+
+// atan
+template<> template<> float_v Trigonometric<VC_IMPL>::atan(const float_v &_x){
+    float_v tmp;
+    tmp.data() = __svml_atanf4(_x.data());
+    return tmp;
+}
+
+template<> template<> sfloat_v Trigonometric<VC_IMPL>::atan(const sfloat_v &_x){
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_atanf4(_x.data()[0]);
+    tmp.data()[1] = __svml_atanf4(_x.data()[1]);
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::atan(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_atan2(_x.data());
+    return tmp;
+}
+
+// atan2
+template<> template<> float_v Trigonometric<VC_IMPL>::atan2(const float_v &_x, const float_v &_y){
+    float_v tmp;
+    tmp.data() = __svml_atan2f4(_x.data(), _y.data());
+    return tmp;
+}
+
+template<> template<> sfloat_v Trigonometric<VC_IMPL>::atan2(const sfloat_v &_x, const sfloat_v &_y){
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_atan2f4(_x.data()[0], _y.data()[0]);
+    tmp.data()[1] = __svml_atan2f4(_x.data()[1], _y.data()[1]);
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::atan2(const double_v &_x, const double_v &_y){
+    double_v tmp;
+    tmp.data() = __svml_atan22(_x.data(), _y.data());
+    return tmp;
+}
+#else
+// sin
+template<> template<typename _T> Vector<_T> Trigonometric<VC_IMPL>::sin(const Vector<_T> &_x){
+    Vector<_T> tmp;
+    tmp.data() = __svml_sinf8(_x.data());
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::sin(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_sin4(_x.data());
+    return tmp;
+}
+
+// cos
+template<> template<typename _T> Vector<_T> Trigonometric<VC_IMPL>::cos(const Vector<_T> &_x){
+    Vector<_T> tmp;
+    tmp.data() = __svml_cosf8(_x.data());
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::cos(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_cos4(_x.data());
+    return tmp;
+}
+
+// sincos
+template<> template<typename _T> void Trigonometric<VC_IMPL>::sincos(const Vector<_T> &_x, Vector<_T> *_sin, Vector<_T> *_cos) {
+    _sin->data() = __svml_sincosf8(_x.data());
+#if defined(__unix__) || defined(__GNUC__)
+    __asm__ __volatile__ ( "vmovaps %%ymm1, %0":"=m"(_cos->data()));
+#else // Windows
+    _asm vmovaps _cos->data(), ymm1;
+#endif
+}
+
+template<> template<> void Trigonometric<VC_IMPL>::sincos(const double_v &_x, double_v *_sin, double_v *_cos) {
+    _sin->data() = __svml_sincos4(_x.data());
+#if defined(__unix__) || defined(__GNUC__)
+    __asm__ __volatile__ ( "vmovaps %%ymm1, %0":"=m"(_cos->data()));
+#else // Windows
+    _asm vmovaps _cos->data(), ymm1;
+#endif
+}
+
+// asin
+template<> template<typename _T> Vector<_T> Trigonometric<VC_IMPL>::asin(const Vector<_T> &_x){
+    Vector<_T> tmp;
+    tmp.data() = __svml_asinf8(_x.data());
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::asin(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_asin4(_x.data());
+    return tmp;
+}
+
+// atan
+template<> template<typename _T> Vector<_T> Trigonometric<VC_IMPL>::atan(const Vector<_T> &_x){
+    Vector<_T> tmp;
+    tmp.data() = __svml_atanf8(_x.data());
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::atan(const double_v &_x){
+    double_v tmp;
+    tmp.data() = __svml_atan4(_x.data());
+    return tmp;
+}
+
+// atan2
+template<> template<typename _T> Vector<_T> Trigonometric<VC_IMPL>::atan2(const Vector<_T> &_x, const Vector<_T> &_y){
+    Vector<_T> tmp;
+    tmp.data() = __svml_atan2f8(_x.data(), _y.data());
+    return tmp;
+}
+
+template<> template<> double_v Trigonometric<VC_IMPL>::atan2(const double_v &_x, const double_v &_y){
+    double_v tmp;
+    tmp.data() = __svml_atan24(_x.data(), _y.data());
+    return tmp;
+}
+#endif
+#else
 
 /*
  * algorithm for sine and cosine:
@@ -472,6 +696,8 @@ template<> template<> double_v Trigonometric<VC_IMPL>::atan2 (const double_v &y,
 
     return a;
 }
+#endif
+
 } // namespace Vc
 
 #include <common/undomacros.h>

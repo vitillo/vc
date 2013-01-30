@@ -49,6 +49,8 @@
 #define VC_COMMON_LOGARITHM_H
 
 #include "macros.h"
+#include "svml.h"
+
 namespace Vc
 {
 namespace Common
@@ -56,6 +58,9 @@ namespace Common
 #ifdef VC__USE_NAMESPACE
 using Vc::VC__USE_NAMESPACE::Const;
 using Vc::VC__USE_NAMESPACE::Vector;
+using Vc::VC__USE_NAMESPACE::float_v;
+using Vc::VC__USE_NAMESPACE::sfloat_v;
+using Vc::VC__USE_NAMESPACE::double_v;
 #endif
 enum LogarithmBase {
     BaseE, Base10, Base2
@@ -166,8 +171,8 @@ struct LogImpl
         }
     }
 
-    static inline Vc_ALWAYS_INLINE void log_series(Vector<double> &VC_RESTRICT x, Vector<double>::AsArg exponent) {
-        typedef Vector<double> V;
+    static inline Vc_ALWAYS_INLINE void log_series(double_v &VC_RESTRICT x, double_v::AsArg exponent) {
+        typedef double_v V;
         typedef Const<double> C;
         const V x2 = x * x;
         V y = C::P(0);
@@ -246,6 +251,107 @@ struct LogImpl
     }
 };
 
+#if defined(USE_INTEL_SVML)
+#if defined(VC_IMPL_SSE)
+// log
+static inline float_v log(VC_ALIGNED_PARAMETER(float_v) x) {
+    float_v tmp;
+    tmp.data() = __svml_logf4(x.data());
+    return tmp;
+}
+
+static inline sfloat_v log(VC_ALIGNED_PARAMETER(sfloat_v) x) {
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_logf4(x.data()[0]);
+    tmp.data()[1] = __svml_logf4(x.data()[1]);
+    return tmp;
+}
+
+static inline double_v log(VC_ALIGNED_PARAMETER(double_v) x) {
+    double_v tmp;
+    tmp.data() = __svml_log2(x.data());
+    return tmp;
+}
+
+// log10
+static inline float_v log10(VC_ALIGNED_PARAMETER(float_v) x) {
+    float_v tmp;
+    tmp.data() = __svml_log10f4(x.data());
+    return tmp;
+}
+
+static inline sfloat_v log10(VC_ALIGNED_PARAMETER(sfloat_v) x) {
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_log10f4(x.data()[0]);
+    tmp.data()[1] = __svml_log10f4(x.data()[1]);
+    return tmp;
+}
+
+static inline double_v log10(VC_ALIGNED_PARAMETER(double_v) x) {
+    double_v tmp;
+    tmp.data() = __svml_log102(x.data());
+    return tmp;
+}
+// log2
+static inline float_v log2(VC_ALIGNED_PARAMETER(float_v) x) {
+    float_v tmp;
+    tmp.data() = __svml_log2f4(x.data());
+    return tmp;
+}
+
+static inline sfloat_v log2(VC_ALIGNED_PARAMETER(sfloat_v) x) {
+    sfloat_v tmp;
+    tmp.data()[0] = __svml_log2f4(x.data()[0]);
+    tmp.data()[1] = __svml_log2f4(x.data()[1]);
+    return tmp;
+}
+
+static inline double_v log2(VC_ALIGNED_PARAMETER(double_v) x) {
+    double_v tmp;
+    tmp.data() = __svml_log22(x.data());
+    return tmp;
+}
+#else
+// log
+template<typename T> static inline Vector<T> log(VC_ALIGNED_PARAMETER(Vector<T>) x) {
+    Vector<T> tmp;
+    tmp.data() = __svml_logf8(x.data());
+    return tmp;
+}
+
+template<> inline double_v log(VC_ALIGNED_PARAMETER(double_v) x) {
+    double_v tmp;
+    tmp.data() = __svml_log4(x.data());
+    return tmp;
+}
+
+// log10
+template<typename T> static inline Vector<T> log10(VC_ALIGNED_PARAMETER(Vector<T>) x) {
+    Vector<T> tmp;
+    tmp.data() = __svml_log10f8(x.data());
+    return tmp;
+}
+
+template<> inline double_v log10(VC_ALIGNED_PARAMETER(double_v) x) {
+    double_v tmp;
+    tmp.data() = __svml_log104(x.data());
+    return tmp;
+}
+
+// log2
+template<typename T> static inline Vector<T> log2(VC_ALIGNED_PARAMETER(Vector<T>) x) {
+    Vector<T> tmp;
+    tmp.data() = __svml_log2f8(x.data());
+    return tmp;
+}
+
+template<> inline double_v log2(VC_ALIGNED_PARAMETER(double_v) x) {
+    double_v tmp;
+    tmp.data() = __svml_log24(x.data());
+    return tmp;
+}
+#endif
+#else
 template<typename T> static inline Vector<T> log(VC_ALIGNED_PARAMETER(Vector<T>) x) {
     typedef typename Vector<T>::Mask M;
     typedef Const<T> C;
@@ -261,6 +367,8 @@ template<typename T> static inline Vector<T> log2(VC_ALIGNED_PARAMETER(Vector<T>
     typedef Const<T> C;
     return LogImpl<Base2>::calc(x);
 }
+#endif
+
 } // namespace Common
 #ifdef VC__USE_NAMESPACE
 namespace VC__USE_NAMESPACE
